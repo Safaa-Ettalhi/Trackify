@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const errorHandler = require('./middlewares/errorHandler');
+const authRoutes = require('./routes/authRoutes');
 
 dotenv.config();
 connectDB();
@@ -16,6 +17,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/',(req,res)=>{
     res.json({message:"L'API Trackify est en cours d'exécution."});
 })
+
+app.use('/api/auth',authRoutes);
 
 app.use(errorHandler);
 
