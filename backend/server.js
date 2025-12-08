@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const errorHandler = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
+const truckRoutes = require('./routes/truckRoutes');
 
 dotenv.config();
 connectDB();
@@ -19,6 +20,7 @@ app.get('/',(req,res)=>{
 })
 
 app.use('/api/auth',authRoutes);
+app.use('/api/trucks',truckRoutes);
 
 app.use(errorHandler);
 
