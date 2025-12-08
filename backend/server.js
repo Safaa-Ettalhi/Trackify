@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const truckRoutes = require('./routes/truckRoutes');
+const trailerRoutes = require('./routes/trailerRoutes');
 
 dotenv.config();
 connectDB();
@@ -21,7 +22,7 @@ app.get('/',(req,res)=>{
 
 app.use('/api/auth',authRoutes);
 app.use('/api/trucks',truckRoutes);
-
+app.use('/api/trailers',trailerRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
