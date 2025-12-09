@@ -8,7 +8,7 @@ const truckRoutes = require('./routes/truckRoutes');
 const trailerRoutes = require('./routes/trailerRoutes');
 const tireRoutes = require('./routes/tireRoutes');
 const tripRoutes = require('./routes/tripRoutes')
-const driverRoutes = require('./routes/chauffeur/driverRoutes'); 
+const driverRoutes = require('./routes/driverRoutes'); 
 
 dotenv.config();
 connectDB();
