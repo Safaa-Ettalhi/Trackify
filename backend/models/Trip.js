@@ -27,8 +27,7 @@ const tripSchema = new mongoose.Schema({
     },
     camion: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Truck',
-        required: [true, 'Le camion est requis']
+        ref: 'Truck'
     },
     remorque: {
         type: mongoose.Schema.Types.ObjectId,
@@ -53,6 +52,12 @@ const tripSchema = new mongoose.Schema({
     }
 }, {
   timestamps: true
+});
+
+tripSchema.pre('save', async function() {
+    if (!this.camion && !this.remorque) {
+        throw new Error('Au moins un camion ou une remorque doit être spécifié');
+    }
 });
 
 module.exports = mongoose.model('Trip',tripSchema);
