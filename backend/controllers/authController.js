@@ -67,3 +67,14 @@ exports.login = async (req, res, next) => {
     next(error);
   }
 };
+exports.allUsers = async (req, res, next) => {
+  try {
+    const users = await User.find();
+    res.status(200).json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    next(error);
+  }
+};
