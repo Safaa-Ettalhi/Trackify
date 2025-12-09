@@ -10,6 +10,7 @@ const tireRoutes = require('./routes/tireRoutes');
 const tripRoutes = require('./routes/tripRoutes')
 const driverRoutes = require('./routes/driverRoutes'); 
 const maintenanceRoutes = require('./routes/maintenanceRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 dotenv.config();
 connectDB();
@@ -31,6 +32,7 @@ app.use('/api/tires', tireRoutes);
 app.use('/api/trips', tripRoutes) ;
 app.use('/api/driver', driverRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/reports', reportRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
