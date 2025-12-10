@@ -4,7 +4,7 @@ exports.getTrucks = async (req, res, next) => {
     try{
         const trucks =await Truck.find();
         res.status(200).json({
-            status:true,
+            success:true,
             count:trucks.length,
             data:trucks
         })
@@ -56,7 +56,7 @@ exports.updateTruck = async(req,res,next)=>{
       });
     }
     res.status(200).json({
-        succes:true,
+        success:true,
         data:truck
     })
       
