@@ -15,10 +15,14 @@ const AdminDashboard = () => {
     upcomingMaintenance: 0,
     trailers: 0
   });
-
+ 
+  const [trucks, setTrucks] = useState([]);
+  const [loadingTrucks, setLoadingTrucks] = useState(false);
   useEffect(() => {
     loadDashboardData();
+    loadTrucks();
   }, []);
+
 
   const loadDashboardData = async () => {
     try {
@@ -48,6 +52,36 @@ const AdminDashboard = () => {
       console.error('Erreur lors du chargement des données:', error);
     } 
   };
+
+    const loadTrucks = async () => {
+        try {
+          setLoadingTrucks(true);
+          const response = await api.get('/trucks');
+          setTrucks(response.data.data || []);
+        } catch (error) {
+          console.error('Erreur lors du chargement des camions:', error);
+        } finally {
+          setLoadingTrucks(false);
+        }
+      };
+
+      const getTruckStatusColor = (etat) => {
+        switch(etat) {
+          case 'disponible': return 'bg-green-100 text-green-700';
+          case 'en_route': return 'bg-blue-100 text-blue-700';
+          case 'maintenance': return 'bg-orange-100 text-orange-700';
+          default: return 'bg-gray-100 text-gray-700';
+        }
+      };
+
+      const getTruckStatusLabel = (etat) => {
+        switch(etat) {
+          case 'disponible': return 'Disponible';
+          case 'en_route': return 'En route';
+          case 'maintenance': return 'En maintenance';
+          default: return etat;
+        }
+      };
 
   const handleLogout = () => {
     logout();
@@ -272,7 +306,68 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {activeSection !== 'overview' && (
+        {/* Section Camions */}
+        {activeSection === 'trucks' && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Liste des Camions</h2>
+            {loadingTrucks ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Chargement des camions...</p>
+                </div>
+              </div>
+            ) : trucks.length > 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200/50 shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Immatriculation</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marque</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modèle</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kilométrage</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">État</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white ">
+                      {trucks.map((truck) => (
+                        <tr key={truck._id} className="hover:bg-gray-50 ">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <Truck className="w-5 h-5 text-gray-400 mr-2" />
+                              <span className="text-sm font-medium text-gray-900">{truck.immatriculation}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{truck.marque}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{truck.modele}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {truck.kilometrageTotal?.toLocaleString('fr-FR') || 0} km
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getTruckStatusColor(truck.etat)}`}>
+                              {getTruckStatusLabel(truck.etat)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                  <Truck className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun camion enregistré</h3>
+                <p className="text-gray-500">Aucun camion n'a été enregistré pour le moment</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeSection !== 'overview' && activeSection !== 'trucks' && (
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
             <div className="max-w-md mx-auto">
               {navigation.find(n => n.id === activeSection) && (
