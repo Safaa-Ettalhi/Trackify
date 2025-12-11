@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Truck, Package, Route, Wrench, FileText, LayoutDashboard, LogOut, Menu, X, TrendingUp, TrendingDown, AlertCircle, CheckCircle, Clock, Calendar } from 'lucide-react';
 import api from '../services/api';
 import TruckList from '../components/TruckList';
+import TruckForm from '../components/TruckForm';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showTruckForm, setShowTruckForm] = useState(false);
+  const [selectedTruck, setSelectedTruck] = useState(null);
   const [stats, setStats] = useState({
     trucks: 0,
     activeTrips: 0,
@@ -55,7 +58,19 @@ const AdminDashboard = () => {
     logout();
     navigate('/login');
   };
+  const handleCreateTruck = () => {
+    setSelectedTruck(null);
+    setShowTruckForm(true);
+  };
 
+  const handleEditTruck = (truck) => {
+    setSelectedTruck(truck);
+    setShowTruckForm(true);
+  };
+
+  const handleTruckSuccess = () => {
+    loadDashboardData(); 
+  };
   const navigation = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: LayoutDashboard },
     { id: 'trucks', label: 'Camions', icon: Truck },
@@ -277,8 +292,8 @@ const AdminDashboard = () => {
          {/* Section Camions */}
               {activeSection === 'trucks' && (
           <TruckList 
-            onEdit={() => {}} 
-            onCreate={() => {}} 
+          onEdit={handleEditTruck}
+          onCreate={handleCreateTruck} 
           />
         )}
 
@@ -309,6 +324,16 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+      {showTruckForm && (
+        <TruckForm
+          truck={selectedTruck}
+          onClose={() => {
+            setShowTruckForm(false);
+            setSelectedTruck(null);
+          }}
+          onSuccess={handleTruckSuccess}
+        />
+      )}
     </div>
   );
 };
