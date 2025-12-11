@@ -5,6 +5,8 @@ import { Truck, Package, Route, Wrench, FileText, LayoutDashboard, LogOut, Menu,
 import api from '../services/api';
 import TruckList from '../components/TruckList';
 import TruckForm from '../components/TruckForm';
+import TrailerList from '../components/TrailerList';
+import TrailerForm from '../components/TrailerForm';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -14,6 +16,11 @@ const AdminDashboard = () => {
   const [showTruckForm, setShowTruckForm] = useState(false);
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [truckListRefreshKey, setTruckListRefreshKey] = useState(0);
+
+    const [showTrailerForm, setShowTrailerForm] = useState(false);
+    const [selectedTrailer, setSelectedTrailer] = useState(null);
+    const [trailerListRefreshKey, setTrailerListRefreshKey] = useState(0);
+
   const [stats, setStats] = useState({
     trucks: 0,
     activeTrips: 0,
@@ -73,6 +80,21 @@ const AdminDashboard = () => {
     loadDashboardData();
     setTruckListRefreshKey(prev => prev + 1); 
   };
+
+    const handleCreateTrailer = () => {
+        setSelectedTrailer(null);
+        setShowTrailerForm(true);
+      };
+    
+      const handleEditTrailer = (trailer) => {
+        setSelectedTrailer(trailer);
+        setShowTrailerForm(true);
+      };
+    
+      const handleTrailerSuccess = () => {
+        loadDashboardData();
+        setTrailerListRefreshKey(prev => prev + 1);
+      };
   const navigation = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: LayoutDashboard },
     { id: 'trucks', label: 'Camions', icon: Truck },
@@ -300,7 +322,15 @@ const AdminDashboard = () => {
           />
         )}
 
-        {activeSection !== 'overview' && activeSection !== 'trucks' && (
+        {/* Section Remorques */}
+        {activeSection === 'trailers' && (
+          <TrailerList 
+          refreshTrigger={trailerListRefreshKey}
+          onEdit={handleEditTrailer}
+          onCreate={handleCreateTrailer} 
+          />
+        )}
+        {activeSection !== 'overview' && activeSection !== 'trucks' && activeSection !== 'trailers' && (
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
             <div className="max-w-md mx-auto">
               {navigation.find(n => n.id === activeSection) && (
@@ -335,6 +365,16 @@ const AdminDashboard = () => {
             setSelectedTruck(null);
           }}
           onSuccess={handleTruckSuccess}
+        />
+      )}
+      {showTrailerForm && (
+        <TrailerForm
+          trailer={selectedTrailer}
+          onClose={() => {
+            setShowTrailerForm(false);
+            setSelectedTrailer(null);
+          }}
+          onSuccess={handleTrailerSuccess}
         />
       )}
     </div>
