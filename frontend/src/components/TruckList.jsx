@@ -75,8 +75,7 @@ const TruckList = ({ onEdit, onCreate, refreshTrigger }) => {
         <h2 className="text-2xl font-bold text-gray-900">Liste des Camions</h2>
         <button
           onClick={onCreate}
-          className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors flex items-center space-x-2"
-        >
+          className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 flex items-center space-x-2">
           <Plus className="w-4 h-4" />
           <span>Ajouter un camion</span>
         </button>
