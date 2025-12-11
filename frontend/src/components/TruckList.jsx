@@ -100,7 +100,7 @@ const TruckList = ({ onEdit, onCreate }) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modèle</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kilométrage</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">État</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -123,7 +123,7 @@ const TruckList = ({ onEdit, onCreate }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
+                    <div className="flex items-center justify-start space-x-2">
                         <button
                           onClick={() => onEdit(truck)}
                           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
