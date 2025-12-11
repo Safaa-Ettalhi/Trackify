@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { Truck, Edit, Trash2, Plus } from 'lucide-react';
 import api from '../services/api';
 
-const TruckList = ({ onEdit, onCreate }) => {
+const TruckList = ({ onEdit, onCreate, refreshTrigger }) => {
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
     loadTrucks();
-  }, []);
+  }, [refreshTrigger]);
 
   const loadTrucks = async () => {
     try {

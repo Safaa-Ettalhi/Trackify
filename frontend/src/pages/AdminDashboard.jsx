@@ -13,6 +13,7 @@ const AdminDashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showTruckForm, setShowTruckForm] = useState(false);
   const [selectedTruck, setSelectedTruck] = useState(null);
+  const [truckListRefreshKey, setTruckListRefreshKey] = useState(0);
   const [stats, setStats] = useState({
     trucks: 0,
     activeTrips: 0,
@@ -69,7 +70,8 @@ const AdminDashboard = () => {
   };
 
   const handleTruckSuccess = () => {
-    loadDashboardData(); 
+    loadDashboardData();
+    setTruckListRefreshKey(prev => prev + 1); 
   };
   const navigation = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: LayoutDashboard },
@@ -292,6 +294,7 @@ const AdminDashboard = () => {
          {/* Section Camions */}
               {activeSection === 'trucks' && (
           <TruckList 
+          refreshTrigger={truckListRefreshKey}
           onEdit={handleEditTruck}
           onCreate={handleCreateTruck} 
           />
