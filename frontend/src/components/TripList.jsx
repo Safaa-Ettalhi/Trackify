@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Route, Edit, Trash2, Plus, Download, MapPin, Calendar, User, Truck, Package } from 'lucide-react';
+import { Route, Edit, Trash2, Plus, Download, MapPin, Calendar, User, Truck, Package, Eye, X } from 'lucide-react';
 import api from '../services/api';
 
 const TripList = ({ onEdit, onCreate, refreshTrigger }) => {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+  const [selectedTrip, setSelectedTrip] = useState(null);
+
   useEffect(() => {
     loadTrips();
   }, [refreshTrigger]);
@@ -38,6 +39,26 @@ const TripList = ({ onEdit, onCreate, refreshTrigger }) => {
       console.error(err);
     }
   };
+
+  const handleDownloadPDF = async (tripId) => {
+    try {
+      const response = await api.get(`/trips/${tripId}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `trajet-${tripId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+      alert('Erreur lors du téléchargement du PDF');
+    }
+  };
+
 
   const getStatusColor = (statut) => {
     switch(statut) {
@@ -146,6 +167,13 @@ const TripList = ({ onEdit, onCreate, refreshTrigger }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-start space-x-2">
                         <button
+                          onClick={() => setSelectedTrip(trip)}
+                          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg "
+                          title="Voir détails"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => onEdit(trip)}
                           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg "
                           title="Modifier"
@@ -180,6 +208,143 @@ const TripList = ({ onEdit, onCreate, refreshTrigger }) => {
           >
             Créer un trajet
           </button>
+        </div>
+      )}
+          {/* modal de details trjet */}
+        {selectedTrip && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTrip(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+                  <Route className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Détails du trajet #{selectedTrip.numero}</h2>
+              </div>
+              <button onClick={() => setSelectedTrip(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Lieu de départ</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedTrip.lieuDepart}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Lieu d'arrivée</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedTrip.lieuArrivee}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Date de départ</p>
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm font-medium text-gray-900">{formatDate(selectedTrip.dateDepart)}</p>
+                  </div>
+                </div>
+                {selectedTrip.dateArriveePrevue && (
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Date d'arrivée prévue</p>
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <p className="text-sm font-medium text-gray-900">{formatDate(selectedTrip.dateArriveePrevue)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Chauffeur</p>
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm font-medium text-gray-900">{selectedTrip.chauffeur?.name || '-'}</p>
+                  </div>
+                  {selectedTrip.chauffeur?.email && (
+                    <p className="text-xs text-gray-500 mt-1">{selectedTrip.chauffeur.email}</p>
+                  )}
+                </div>
+                {selectedTrip.camion && (
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Camion</p>
+                    <div className="flex items-center space-x-2">
+                      <Truck className="w-4 h-4 text-gray-400" />
+                      <p className="text-sm font-medium text-gray-900">{selectedTrip.camion.immatriculation}</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{selectedTrip.camion.marque} {selectedTrip.camion.modele}</p>
+                  </div>
+                )}
+                {selectedTrip.remorque && (
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Remorque</p>
+                    <div className="flex items-center space-x-2">
+                      <Package className="w-4 h-4 text-gray-400" />
+                      <p className="text-sm font-medium text-gray-900">#{selectedTrip.remorque.numero}</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{selectedTrip.remorque.type}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-xs font-medium text-gray-500 mb-1">Statut</p>
+                <span className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(selectedTrip.statut)}`}>
+                  {getStatusLabel(selectedTrip.statut)}
+                </span>
+              </div>
+
+              {(selectedTrip.kilometrageDepart || selectedTrip.kilometrageArrivee || selectedTrip.volumeGasoil) && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {selectedTrip.kilometrageDepart && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs font-medium text-gray-500 mb-1">Kilométrage départ</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedTrip.kilometrageDepart.toLocaleString('fr-FR')} km</p>
+                    </div>
+                  )}
+                  {selectedTrip.kilometrageArrivee && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs font-medium text-gray-500 mb-1">Kilométrage arrivée</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedTrip.kilometrageArrivee.toLocaleString('fr-FR')} km</p>
+                    </div>
+                  )}
+                  {selectedTrip.volumeGasoil && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs font-medium text-gray-500 mb-1">Volume gasoil</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedTrip.volumeGasoil} L</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedTrip.remarques && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Remarques</p>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedTrip.remarques}</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleDownloadPDF(selectedTrip._id)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Télécharger PDF</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedTrip(null);
+                    onEdit(selectedTrip);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  Modifier
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
