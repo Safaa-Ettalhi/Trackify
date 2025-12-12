@@ -11,17 +11,22 @@ exports.getConsumptionReport = async (req, res, next) => {
 
     const consumptionByTruck = {};
     trips.forEach(trip => {
+      // Vérifier que le camion existe
+      if (!trip.camion || !trip.camion._id) {
+        return; // Ignorer les trajets sans camion
+      }
+      
       const truckId = trip.camion._id.toString();
       if (!consumptionByTruck[truckId]) {
         consumptionByTruck[truckId] = {
-          camion: trip.camion.immatriculation,
-          modele: trip.camion.modele,
-          marque: trip.camion.marque,
+          camion: trip.camion.immatriculation || 'N/A',
+          modele: trip.camion.modele || 'N/A',
+          marque: trip.camion.marque || 'N/A',
           totalGasoil: 0,
           nombreTrajets: 0
         };
       }
-      consumptionByTruck[truckId].totalGasoil += trip.volumeGasoil;
+      consumptionByTruck[truckId].totalGasoil += trip.volumeGasoil || 0;
       consumptionByTruck[truckId].nombreTrajets += 1;
     });
 
@@ -45,14 +50,22 @@ exports.getKilometrageReport = async (req, res, next) => {
 
     const kilometrageByTruck = {};
     trips.forEach(trip => {
+      if (!trip.camion || !trip.camion._id) {
+        return; 
+      }
+      
       const truckId = trip.camion._id.toString();
-      const distance = trip.kilometrageArrivee - trip.kilometrageDepart;
+      const distance = (trip.kilometrageArrivee || 0) - (trip.kilometrageDepart || 0);
+      
+      if (distance <= 0) {
+        return; 
+      }
       
       if (!kilometrageByTruck[truckId]) {
         kilometrageByTruck[truckId] = {
-          camion: trip.camion.immatriculation,
-          modele: trip.camion.modele,
-          marque: trip.camion.marque,
+          camion: trip.camion.immatriculation || 'N/A',
+          modele: trip.camion.modele || 'N/A',
+          marque: trip.camion.marque || 'N/A',
           totalKilometres: 0,
           nombreTrajets: 0
         };
