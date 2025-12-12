@@ -11,6 +11,7 @@ import TripList from '../components/TripList';
 import TripForm from '../components/TripForm';
 import MaintenanceList from '../components/MaintenanceList';
 import MaintenanceForm from '../components/MaintenanceForm';
+import Reports from '../components/Reports';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -390,7 +391,12 @@ const AdminDashboard = () => {
           />
         )}
 
-        {activeSection !== 'overview' && activeSection !== 'trucks' && activeSection !== 'trailers' && activeSection !== 'trips' && activeSection !== 'maintenance' && (
+        {/* Section Rapports */}
+        {activeSection === 'reports' && (
+          <Reports />
+        )}
+
+        {activeSection !== 'overview' && activeSection !== 'trucks' && activeSection !== 'trailers' && activeSection !== 'trips' && activeSection !== 'maintenance' && activeSection !== 'reports' && (
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
             <div className="max-w-md mx-auto">
               {navigation.find(n => n.id === activeSection) && (
