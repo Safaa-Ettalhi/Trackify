@@ -62,9 +62,9 @@ docker-compose up -d
 ```
 
 3. **Accéder à l'application**
-- Frontend : http://localhost:3000
+- Frontend : http://localhost:3001
 - Backend API : http://localhost:5000
-- MongoDB : localhost:27017
+- MongoDB : localhost:27019
 
 ### Option 2 : Installation Manuelle
 
