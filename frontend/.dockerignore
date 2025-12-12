@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.env.production
+dist
+dist-ssr
+*.local
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+QUESTIONS_REPONSES.md
+
+
