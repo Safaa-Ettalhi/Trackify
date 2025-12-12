@@ -1,17 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Route, LogOut, Menu, X, MapPin, Calendar, Download} from 'lucide-react';
+import { Route, LogOut, Menu, X } from 'lucide-react';
 import api from '../services/api';
+import TripCard from '../components/TripCard';
+import TripUpdateForm from '../components/TripUpdateForm';
 
 const DriverDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('trips');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState([]);
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  
+  const [filters, setFilters] = useState({
+    statut: '',      
+    search: ''      
+  });
 
   useEffect(() => {
     loadMyTrips();
@@ -34,6 +41,16 @@ const DriverDashboard = () => {
     navigate('/login');
   };
 
+  const handleUpdateStatus = async (tripId, newStatus) => {
+    try {
+      await api.put(`/driver/trips/${tripId}/status`, { statut: newStatus });
+      loadMyTrips();
+    } catch (error) {
+      alert('Erreur lors de la mise à jour du statut');
+      console.error(error);
+    }
+  };
+
   const handleDownloadPDF = async (tripId) => {
     try {
       const response = await api.get(`/trips/${tripId}/pdf`, {
@@ -53,34 +70,30 @@ const DriverDashboard = () => {
     }
   };
 
-  const formatDate = (date) => {
-    if (!date) return 'Non défini';
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleEdit = (trip) => {
+    setSelectedTrip(trip);
+    setShowUpdateForm(true);
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'en_cours': return 'bg-blue-100 text-blue-700';
-      case 'termine': return 'bg-green-100 text-green-700';
-      case 'a_faire': return 'bg-gray-100 text-gray-700';
-      default: return 'bg-gray-100 text-gray-700';
+  const filteredTrips = trips.filter(trip => {
+    if (filters.statut && trip.statut !== filters.statut) {
+      return false;
     }
-  };
-
-  const getStatusLabel = (status) => {
-    switch(status) {
-      case 'en_cours': return 'En cours';
-      case 'termine': return 'Terminé';
-      case 'a_faire': return 'À faire';
-      default: return status;
+    
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = 
+        trip.numero?.toLowerCase().includes(searchLower) ||
+        trip.lieuDepart?.toLowerCase().includes(searchLower) ||
+        trip.lieuArrivee?.toLowerCase().includes(searchLower);
+      
+      if (!matchesSearch) {
+        return false;
+      }
     }
-  };
+    
+    return true;
+  });
 
   if (loading) {
     return (
@@ -114,14 +127,14 @@ const DriverDashboard = () => {
                   <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
                   <p className="text-xs text-gray-500">Chauffeur</p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center text-white font-semibold shadow-lg ">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center text-white font-semibold shadow-lg ring-2 ring-gray-200">
                   {user?.name?.charAt(0)}
                 </div>
               </div>
               
               <button
                 onClick={handleLogout}
-                className="hidden sm:flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl"
+                className="hidden sm:flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Déconnexion</span>
@@ -141,21 +154,7 @@ const DriverDashboard = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="sm:hidden bg-white border-b border-gray-200">
-          <div className="px-4 py-2 space-y-1">
-            <button
-              onClick={() => {
-                setActiveSection('trips');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left ${
-                activeSection === 'trips'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <Route className="w-5 h-5" />
-              <span className="font-medium">Mes Trajets</span>
-            </button>
+          <div className="px-4 py-2">
             <button
               onClick={handleLogout}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left text-gray-700 hover:bg-gray-100"
@@ -168,109 +167,119 @@ const DriverDashboard = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <nav className="hidden sm:flex space-x-2 mb-8 bg-white/80  rounded-2xl p-2 border border-gray-200/50 shadow-md">
-          <button
-            onClick={() => setActiveSection('trips')}
-            className={`flex items-center space-x-2 px-5 py-3 rounded-xl font-medium text-sm ${
-              activeSection === 'trips'
-                ? 'bg-gradient-to-r from-gray-900 to-gray-700 text-white shadow-lg transform scale-105'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-            }`}
-          >
-            <Route className="w-4 h-4" />
-            <span>Mes Trajets</span>
-          </button>
-        </nav>
-
-        {/* Content */}
-        {activeSection === 'trips' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <div>
               <h2 className="text-2xl font-bold text-gray-900">Mes Trajets</h2>
+              <p className="text-sm text-gray-500 mt-1">Gérez vos trajets assignés</p>
+            </div>
+            <button
+              onClick={loadMyTrips}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Actualiser
+            </button>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200/50 shadow-sm p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Rechercher
+                </label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
+                  placeholder="Numéro, lieu départ, lieu arrivée..."
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Filtrer par statut
+                </label>
+                <select
+                  value={filters.statut}
+                  onChange={(e) => setFilters({ ...filters, statut: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
+                >
+                  <option value="">Tous les statuts</option>
+                  <option value="a_faire">À faire</option>
+                  <option value="en_cours">En cours</option>
+                  <option value="termine">Terminé</option>
+                  <option value="annule">Annulé</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                {filteredTrips.length} trajet{filteredTrips.length > 1 ? 's' : ''} trouvé{filteredTrips.length > 1 ? 's' : ''}
+              </p>
+              {(filters.statut || filters.search) && (
+                <button
+                  onClick={() => setFilters({ statut: '', search: '' })}
+                  className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+                >
+                  Réinitialiser les filtres
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {trips.length > 0 ? (
+          filteredTrips.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6">
+              {filteredTrips.map((trip) => (
+                <TripCard
+                  key={trip._id}
+                  trip={trip}
+                  onUpdateStatus={handleUpdateStatus}
+                  onDownloadPDF={handleDownloadPDF}
+                  onEdit={handleEdit}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <Route className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun trajet trouvé</h3>
+              <p className="text-gray-500 mb-4">Aucun trajet ne correspond à vos critères de recherche</p>
               <button
-                onClick={loadMyTrips}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 "
+                onClick={() => setFilters({ statut: '', search: '' })}
+                className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
               >
-                Actualiser
+                Réinitialiser les filtres
               </button>
             </div>
-
-            {trips.length > 0 ? (
-              <div className="grid grid-cols-1 gap-6">
-                {trips.map((trip) => (
-                  <div key={trip._id} className="bg-white rounded-2xl p-6 border border-gray-200/50 shadow-lg hover:shadow-xl ">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                      <div className="mb-4 sm:mb-0">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-bold text-gray-900">Trajet #{trip.numero}</h3>
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(trip.statut)}`}>
-                            {getStatusLabel(trip.statut)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{trip.lieuDepart} → {trip.lieuArrivee}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleDownloadPDF(trip._id)}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>PDF</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Date de départ</p>
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <p className="text-sm font-medium text-gray-900">{formatDate(trip.dateDepart)}</p>
-                        </div>
-                      </div>
-                      {trip.dateArriveePrevue && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Date d'arrivée prévue</p>
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <p className="text-sm font-medium text-gray-900">{formatDate(trip.dateArriveePrevue)}</p>
-                          </div>
-                        </div>
-                      )}
-                      {trip.camion && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Camion</p>
-                          <p className="text-sm font-medium text-gray-900">{trip.camion.immatriculation}</p>
-                        </div>
-                      )}
-                      {trip.remorque && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Remorque</p>
-                          <p className="text-sm font-medium text-gray-900">#{trip.remorque.numero}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                  <Route className="w-10 h-10 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun trajet assigné</h3>
-                <p className="text-gray-500">Vous serez notifié lorsqu'un trajet vous sera assigné</p>
-              </div>
-            )}
+          )
+        ) : (
+          <div className="bg-white rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <Route className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun trajet assigné</h3>
+            <p className="text-gray-500">Vous serez notifié lorsqu'un trajet vous sera assigné</p>
           </div>
         )}
       </div>
+      
+      {showUpdateForm && selectedTrip && (
+        <TripUpdateForm
+          trip={selectedTrip}
+          onClose={() => {
+            setShowUpdateForm(false);
+            setSelectedTrip(null);
+          }}
+          onSuccess={() => {
+            loadMyTrips();
+            setShowUpdateForm(false);
+            setSelectedTrip(null);
+          }}
+        />
+      )}
     </div>
   );
 };
