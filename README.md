@@ -52,7 +52,7 @@ Application web complète pour la gestion de flotte de véhicules, permettant d'
 
 1. **Cloner le repository**
 ```bash
-git clone <https://github.com/Safaa-Ettalhi/Trackify>
+git clone "https://github.com/Safaa-Ettalhi/Trackify"
 cd Trackify
 ```
 
