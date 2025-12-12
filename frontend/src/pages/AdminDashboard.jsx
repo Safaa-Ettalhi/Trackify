@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Package, Route, Wrench, FileText, LayoutDashboard, LogOut, Menu, X, TrendingUp, TrendingDown, AlertCircle, CheckCircle, Clock, Calendar } from 'lucide-react';
+import { Truck, Package, Route, Wrench, FileText, LayoutDashboard, LogOut, Menu, X, TrendingUp, TrendingDown, AlertCircle, CheckCircle, Clock, Calendar, Circle } from 'lucide-react';
 import api from '../services/api';
 import TruckList from '../components/TruckList';
 import TruckForm from '../components/TruckForm';
@@ -12,6 +12,8 @@ import TripForm from '../components/TripForm';
 import MaintenanceList from '../components/MaintenanceList';
 import MaintenanceForm from '../components/MaintenanceForm';
 import Reports from '../components/Reports';
+import TireList from '../components/TireList';
+import TireForm from '../components/TireForm';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -33,6 +35,10 @@ const AdminDashboard = () => {
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState(null);
   const [maintenanceListRefreshKey, setMaintenanceListRefreshKey] = useState(0);
+
+  const [showTireForm, setShowTireForm] = useState(false);
+  const [selectedTire, setSelectedTire] = useState(null);
+  const [tireListRefreshKey, setTireListRefreshKey] = useState(0);
 
   const [stats, setStats] = useState({
     trucks: 0,
@@ -139,11 +145,27 @@ const AdminDashboard = () => {
     setMaintenanceListRefreshKey(prev => prev + 1);
   };
 
+  const handleCreateTire = () => {
+    setSelectedTire(null);
+    setShowTireForm(true);
+  };
+
+  const handleEditTire = (tire) => {
+    setSelectedTire(tire);
+    setShowTireForm(true);
+  };
+
+  const handleTireSuccess = () => {
+    loadDashboardData();
+    setTireListRefreshKey(prev => prev + 1);
+  };
+
   const navigation = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: LayoutDashboard },
     { id: 'trucks', label: 'Camions', icon: Truck },
     { id: 'trailers', label: 'Remorques', icon: Package },
     { id: 'trips', label: 'Trajets', icon: Route },
+    { id: 'tires', label: 'Pneus', icon: Circle },
     { id: 'maintenance', label: 'Maintenance', icon: Wrench },
     { id: 'reports', label: 'Rapports', icon: FileText },
   ];
@@ -382,6 +404,15 @@ const AdminDashboard = () => {
           />
         )}
 
+        {/* Section Pneus */}
+        {activeSection === 'tires' && (
+          <TireList 
+            refreshTrigger={tireListRefreshKey}
+            onEdit={handleEditTire}
+            onCreate={handleCreateTire} 
+          />
+        )}
+
         {/* Section Maintenance */}
         {activeSection === 'maintenance' && (
           <MaintenanceList 
@@ -396,7 +427,7 @@ const AdminDashboard = () => {
           <Reports />
         )}
 
-        {activeSection !== 'overview' && activeSection !== 'trucks' && activeSection !== 'trailers' && activeSection !== 'trips' && activeSection !== 'maintenance' && activeSection !== 'reports' && (
+        {activeSection !== 'overview' && activeSection !== 'trucks' && activeSection !== 'trailers' && activeSection !== 'trips' && activeSection !== 'tires' && activeSection !== 'maintenance' && activeSection !== 'reports' && (
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
             <div className="max-w-md mx-auto">
               {navigation.find(n => n.id === activeSection) && (
@@ -462,6 +493,17 @@ const AdminDashboard = () => {
             setSelectedMaintenance(null);
           }}
           onSuccess={handleMaintenanceSuccess}
+        />
+      )}
+
+      {showTireForm && (
+        <TireForm
+          tire={selectedTire}
+          onClose={() => {
+            setShowTireForm(false);
+            setSelectedTire(null);
+          }}
+          onSuccess={handleTireSuccess}
         />
       )}
     </div>
