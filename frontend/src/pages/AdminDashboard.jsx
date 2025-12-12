@@ -9,6 +9,8 @@ import TrailerList from '../components/TrailerList';
 import TrailerForm from '../components/TrailerForm';
 import TripList from '../components/TripList';
 import TripForm from '../components/TripForm';
+import MaintenanceList from '../components/MaintenanceList';
+import MaintenanceForm from '../components/MaintenanceForm';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -26,6 +28,10 @@ const AdminDashboard = () => {
   const [showTripForm, setShowTripForm] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [tripListRefreshKey, setTripListRefreshKey] = useState(0);
+
+  const [showMaintenanceForm, setShowMaintenanceForm] = useState(false);
+  const [selectedMaintenance, setSelectedMaintenance] = useState(null);
+  const [maintenanceListRefreshKey, setMaintenanceListRefreshKey] = useState(0);
 
   const [stats, setStats] = useState({
     trucks: 0,
@@ -115,6 +121,21 @@ const AdminDashboard = () => {
   const handleTripSuccess = () => {
     loadDashboardData();
     setTripListRefreshKey(prev => prev + 1);
+  };
+
+  const handleCreateMaintenance = () => {
+    setSelectedMaintenance(null);
+    setShowMaintenanceForm(true);
+  };
+
+  const handleEditMaintenance = (maintenance) => {
+    setSelectedMaintenance(maintenance);
+    setShowMaintenanceForm(true);
+  };
+
+  const handleMaintenanceSuccess = () => {
+    loadDashboardData();
+    setMaintenanceListRefreshKey(prev => prev + 1);
   };
 
   const navigation = [
@@ -359,7 +380,17 @@ const AdminDashboard = () => {
             onCreate={handleCreateTrip} 
           />
         )}
-        {activeSection !== 'overview' && activeSection !== 'trucks' && activeSection !== 'trailers' && activeSection !== 'trips' && (
+
+        {/* Section Maintenance */}
+        {activeSection === 'maintenance' && (
+          <MaintenanceList 
+            refreshTrigger={maintenanceListRefreshKey}
+            onEdit={handleEditMaintenance}
+            onCreate={handleCreateMaintenance} 
+          />
+        )}
+
+        {activeSection !== 'overview' && activeSection !== 'trucks' && activeSection !== 'trailers' && activeSection !== 'trips' && activeSection !== 'maintenance' && (
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
             <div className="max-w-md mx-auto">
               {navigation.find(n => n.id === activeSection) && (
@@ -414,6 +445,17 @@ const AdminDashboard = () => {
             setSelectedTrip(null);
           }}
           onSuccess={handleTripSuccess}
+        />
+      )}
+
+      {showMaintenanceForm && (
+        <MaintenanceForm
+          maintenance={selectedMaintenance}
+          onClose={() => {
+            setShowMaintenanceForm(false);
+            setSelectedMaintenance(null);
+          }}
+          onSuccess={handleMaintenanceSuccess}
         />
       )}
     </div>
