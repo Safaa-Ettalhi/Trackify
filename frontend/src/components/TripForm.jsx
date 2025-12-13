@@ -47,29 +47,15 @@ const TripForm = ({ trip, onClose, onSuccess }) => {
     try {
       setLoadingData(true);
 
-      const [tripsRes, trucksRes, trailersRes] = await Promise.all([
-        api.get('/trips'),
+      const [usersRes, trucksRes, trailersRes] = await Promise.all([
+        api.get('/auth/all'),
         api.get('/trucks'),
         api.get('/trailers')
       ]);
 
-      const trips = tripsRes.data.data || [];
-      const uniqueDrivers = [];
-      const driverMap = new Map();
+      const allDrivers = (usersRes.data.data || []).filter(user => user.role === 'chauffeur');
       
-      trips.forEach(t => {
-        if (t.chauffeur && !driverMap.has(t.chauffeur._id)) {
-          driverMap.set(t.chauffeur._id, t.chauffeur);
-          uniqueDrivers.push(t.chauffeur);
-        }
-      });
-
-
-      if (trip && trip.chauffeur && !driverMap.has(trip.chauffeur._id || trip.chauffeur)) {
-        uniqueDrivers.push(trip.chauffeur);
-      }
-
-      setDrivers(uniqueDrivers);
+      setDrivers(allDrivers);
       setTrucks(trucksRes.data.data || []);
       setTrailers(trailersRes.data.data || []);
     } catch (err) {
