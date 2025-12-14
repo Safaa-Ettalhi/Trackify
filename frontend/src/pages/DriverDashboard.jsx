@@ -5,6 +5,7 @@ import { Route, LogOut, Menu, X } from 'lucide-react';
 import api from '../services/api';
 import TripCard from '../components/TripCard';
 import TripUpdateForm from '../components/TripUpdateForm';
+import Pagination from '../components/Pagination';
 
 const DriverDashboard = () => {
   const { user, logout } = useAuth();
@@ -20,19 +21,43 @@ const DriverDashboard = () => {
     search: ''      
   });
 
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    pages: 0
+  });
+
   useEffect(() => {
     loadMyTrips();
-  }, []);
+  }, [pagination.page]);
 
   const loadMyTrips = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/driver/trips');
+      const response = await api.get('/driver/trips', {
+        params: {
+          page: pagination.page,
+          limit: pagination.limit
+        }
+      });
       setTrips(response.data.data || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total || 0,
+        pages: response.data.pages || 0
+      }));
     } catch (error) {
       console.error('Erreur lors du chargement des trajets:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -229,17 +254,28 @@ const DriverDashboard = () => {
 
         {trips.length > 0 ? (
           filteredTrips.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6">
-              {filteredTrips.map((trip) => (
-                <TripCard
-                  key={trip._id}
-                  trip={trip}
-                  onUpdateStatus={handleUpdateStatus}
-                  onDownloadPDF={handleDownloadPDF}
-                  onEdit={handleEdit}
+            <>
+              <div className="grid grid-cols-1 gap-6">
+                {filteredTrips.map((trip) => (
+                  <TripCard
+                    key={trip._id}
+                    trip={trip}
+                    onUpdateStatus={handleUpdateStatus}
+                    onDownloadPDF={handleDownloadPDF}
+                    onEdit={handleEdit}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination  */}
+              {!filters.statut && !filters.search && pagination.pages > 1 && (
+                <Pagination
+                  page={pagination.page}
+                  pages={pagination.pages}
+                  onPageChange={handlePageChange}
                 />
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <div className="bg-white rounded-2xl p-12 border border-gray-200/50 shadow-lg text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
