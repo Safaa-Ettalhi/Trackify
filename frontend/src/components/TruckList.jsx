@@ -1,26 +1,52 @@
 import { useState, useEffect } from 'react';
 import { Truck, Edit, Trash2, Plus } from 'lucide-react';
 import api from '../services/api';
+import Pagination from './Pagination';
 
 const TruckList = ({ onEdit, onCreate, refreshTrigger }) => {
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    pages: 0
+  });
+
   useEffect(() => {
     loadTrucks();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, pagination.page]);
 
   const loadTrucks = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/trucks');
+      const response = await api.get('/trucks', {
+        params: {
+          page: pagination.page,
+          limit: pagination.limit
+        }
+      });
       setTrucks(response.data.data || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total || 0,
+        pages: response.data.pages || 0
+      }));
     } catch (err) {
       setError('Erreur lors du chargement des camions');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -31,7 +57,11 @@ const TruckList = ({ onEdit, onCreate, refreshTrigger }) => {
 
     try {
       await api.delete(`/trucks/${id}`);
-      loadTrucks();
+      if (trucks.length === 1 && pagination.page > 1) {
+        setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        loadTrucks();
+      }
     } catch (err) {
       alert('Erreur lors de la suppression');
       console.error(err);
@@ -159,6 +189,14 @@ const TruckList = ({ onEdit, onCreate, refreshTrigger }) => {
             Ajouter un camion
           </button>
         </div>
+      )}
+
+      {pagination.pages > 1 && (
+        <Pagination
+          page={pagination.page}
+          pages={pagination.pages}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

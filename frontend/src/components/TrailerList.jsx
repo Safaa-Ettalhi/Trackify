@@ -1,27 +1,52 @@
 import { useState, useEffect } from 'react';
 import { Package, Edit, Trash2, Plus } from 'lucide-react';
 import api from '../services/api';
+import Pagination from './Pagination';
 
 const TrailerList = ({ onEdit, onCreate, refreshTrigger }) => {
   const [trailers, setTrailers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    pages: 0
+  });
   
   useEffect(() => {
     loadTrailers();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, pagination.page]);
 
   const loadTrailers = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/trailers');
+      const response = await api.get('/trailers', {
+        params: {
+          page: pagination.page,
+          limit: pagination.limit
+        }
+      });
       setTrailers(response.data.data || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total || 0,
+        pages: response.data.pages || 0
+      }));
     } catch (err) {
       setError('Erreur lors du chargement des remorques');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -32,7 +57,11 @@ const TrailerList = ({ onEdit, onCreate, refreshTrigger }) => {
 
     try {
       await api.delete(`/trailers/${id}`);
-      loadTrailers();
+      if (trailers.length === 1 && pagination.page > 1) {
+        setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        loadTrailers();
+      }
     } catch (err) {
       alert('Erreur lors de la suppression');
       console.error(err);
@@ -157,6 +186,14 @@ const TrailerList = ({ onEdit, onCreate, refreshTrigger }) => {
             Ajouter une remorque
           </button>
         </div>
+      )}
+
+      {pagination.pages > 1 && (
+        <Pagination
+          page={pagination.page}
+          pages={pagination.pages}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

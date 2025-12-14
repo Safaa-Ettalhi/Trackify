@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Wrench, Edit, Plus, Calendar, Truck, Package, AlertTriangle, Check, CheckCircle2 } from 'lucide-react';
 import api from '../services/api';
+import Pagination from './Pagination';
 
 const MaintenanceList = ({ onEdit, onCreate, refreshTrigger }) => {
   const [maintenances, setMaintenances] = useState([]);
@@ -8,21 +9,45 @@ const MaintenanceList = ({ onEdit, onCreate, refreshTrigger }) => {
   const [error, setError] = useState('');
   const [markingDone, setMarkingDone] = useState({});
 
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    pages: 0
+  });
+
   useEffect(() => {
     loadMaintenances();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, pagination.page]);
 
   const loadMaintenances = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/maintenance');
+      const response = await api.get('/maintenance', {
+        params: {
+          page: pagination.page,
+          limit: pagination.limit
+        }
+      });
       setMaintenances(response.data.data || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total || 0,
+        pages: response.data.pages || 0
+      }));
     } catch (err) {
       setError('Erreur lors du chargement des maintenances');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -311,6 +336,15 @@ const MaintenanceList = ({ onEdit, onCreate, refreshTrigger }) => {
             Ajouter une maintenance
           </button>
         </div>
+      )}
+
+      {/* Composant de pagination */}
+      {pagination.pages > 1 && (
+        <Pagination
+          page={pagination.page}
+          pages={pagination.pages}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

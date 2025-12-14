@@ -1,27 +1,53 @@
 import { useState, useEffect } from 'react';
 import { Circle, Edit, Trash2, Plus, Truck, Package, Calendar } from 'lucide-react';
 import api from '../services/api';
+import Pagination from './Pagination';
 
 const TireList = ({ onEdit, onCreate, refreshTrigger }) => {
   const [tires, setTires] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // États de pagination
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    pages: 0
+  });
+
   useEffect(() => {
     loadTires();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, pagination.page]);
 
   const loadTires = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/tires');
+      const response = await api.get('/tires', {
+        params: {
+          page: pagination.page,
+          limit: pagination.limit
+        }
+      });
       setTires(response.data.data || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total || 0,
+        pages: response.data.pages || 0
+      }));
     } catch (err) {
       setError('Erreur lors du chargement des pneus');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page: newPage }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -32,7 +58,11 @@ const TireList = ({ onEdit, onCreate, refreshTrigger }) => {
 
     try {
       await api.delete(`/tires/${id}`);
-      loadTires();
+      if (tires.length === 1 && pagination.page > 1) {
+        setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        loadTires();
+      }
     } catch (err) {
       alert('Erreur lors de la suppression');
       console.error(err);
@@ -197,6 +227,14 @@ const TireList = ({ onEdit, onCreate, refreshTrigger }) => {
             Ajouter un pneu
           </button>
         </div>
+      )}
+
+      {pagination.pages > 1 && (
+        <Pagination
+          page={pagination.page}
+          pages={pagination.pages}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );
