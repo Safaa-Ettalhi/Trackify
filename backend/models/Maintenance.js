@@ -29,6 +29,17 @@ const maintenanceSchema = new mongoose.Schema({
     },
     prochainKilometrage: {
         type: Number
+    },
+    statut: {
+        type: String,
+        enum: ['en_attente', 'effectuee', 'annulee'],
+        default: 'en_attente'
+    },
+    dateEffectuee: {
+        type: Date
+    },
+    kilometrageEffectue: {
+        type: Number
     }
 
 },{
