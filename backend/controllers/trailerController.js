@@ -2,10 +2,24 @@ const Trailer = require('../models/Trailer');
 
 exports.getTrailers = async (req, res, next) => {
     try {
-        const trailers = await Trailer.find();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const total = await Trailer.countDocuments();
+
+        const trailers = await Trailer.find()
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
         res.status(200).json({
             success: true,
             count: trailers.length,
+            total: total,
+            page: page,
+            limit: limit,
+            pages: Math.ceil(total / limit),
             data: trailers
         });
     } catch (error) {

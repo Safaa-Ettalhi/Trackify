@@ -57,7 +57,16 @@ const getMaintenanceStatus = (maintenance, vehicle) => {
 
 exports.getMaintenances = async (req, res, next) => {
   try {
-    const maintenances = await Maintenance.find();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Maintenance.countDocuments();
+
+    const maintenances = await Maintenance.find()
+      .skip(skip)
+      .limit(limit)
+      .sort({ priority: -1, createdAt: -1 });
     
     const enrichedMaintenances = await Promise.all(
       maintenances.map(async (maintenance) => {
@@ -90,6 +99,10 @@ exports.getMaintenances = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: enrichedMaintenances.length,
+      total: total,
+      page: page,
+      limit: limit,
+      pages: Math.ceil(total / limit),
       data: enrichedMaintenances
     });
   } catch (error) {

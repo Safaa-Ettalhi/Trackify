@@ -2,11 +2,25 @@ const Truck = require('../models/Truck');
 
 exports.getTrucks = async (req, res, next) => {
     try{
-        const trucks =await Truck.find();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const total = await Truck.countDocuments();
+
+        const trucks = await Truck.find()
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
         res.status(200).json({
-            success:true,
-            count:trucks.length,
-            data:trucks
+            success: true,
+            count: trucks.length,
+            total: total,
+            page: page,
+            limit: limit,
+            pages: Math.ceil(total / limit),
+            data: trucks
         })
     }catch(error){
         next(error);

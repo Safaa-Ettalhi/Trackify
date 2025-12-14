@@ -2,21 +2,32 @@ const Trip = require('../models/Trip');
 
 exports.getTrips = async(req,res,next)=>{
     try {
-        let query ;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
+        let queryFilter = {};
         if (req.user.role === 'chauffeur') {
-            query = Trip.find({chauffeur:req.user._id});
-        } else {
-            query = Trip.find() ;
+            queryFilter = { chauffeur: req.user._id };
         }
-         const trips = await query
+
+        const total = await Trip.countDocuments(queryFilter);
+
+        const trips = await Trip.find(queryFilter)
+                      .skip(skip)
+                      .limit(limit)
                       .populate('chauffeur','name email')
                       .populate('camion' , 'immatriculation modele marque')
-                      .populate('remorque','numero type' );
+                      .populate('remorque','numero type')
+                      .sort({ createdAt: -1 }); 
         
         res.status(200).json({
             success: true ,
             count : trips.length ,
+            total: total,
+            page: page,
+            limit: limit,
+            pages: Math.ceil(total / limit),
             data : trips
         });
 
