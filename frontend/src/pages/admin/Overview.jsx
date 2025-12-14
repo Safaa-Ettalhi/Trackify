@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Package, Route, Wrench, FileText, TrendingUp, TrendingDown } from 'lucide-react';
+import { Truck, Package, Route, Wrench, FileText, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import api from '../../services/api';
 
 const Overview = () => {
@@ -9,33 +9,43 @@ const Overview = () => {
     trucks: 0,
     activeTrips: 0,
     upcomingMaintenance: 0,
+    urgentMaintenance: 0,
+    overdueMaintenance: 0,
     trailers: 0
   });
 
   useEffect(() => {
     loadDashboardData();
+    const interval = setInterval(loadDashboardData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      const [trucksRes, tripsRes, maintenanceRes, trailersRes] = await Promise.all([
+      const [trucksRes, tripsRes, maintenanceRes, notificationsRes, trailersRes] = await Promise.all([
         api.get('/trucks'),
         api.get('/trips'),
         api.get('/maintenance/upcoming'),
+        api.get('/maintenance/notifications').catch(() => ({ data: { data: [] } })),
         api.get('/trailers')
       ]);
 
       const trucks = trucksRes.data.data || [];
       const trips = tripsRes.data.data || [];
       const maintenances = maintenanceRes.data.data || [];
+      const notifications = notificationsRes.data.data || [];
       const trailers = trailersRes.data.data || [];
 
       const activeTrips = trips.filter(trip => trip.statut === 'en_cours').length;
+      const urgentMaintenance = notifications.filter(n => n.notificationStatus === 'urgente').length;
+      const overdueMaintenance = notifications.filter(n => n.notificationStatus === 'depassee').length;
       
       setStats({
         trucks: trucks.length,
         activeTrips: activeTrips,
         upcomingMaintenance: maintenances.length,
+        urgentMaintenance,
+        overdueMaintenance,
         trailers: trailers.length
       });
     } catch (error) {
@@ -67,9 +77,13 @@ const Overview = () => {
       value: stats.upcomingMaintenance.toString(), 
       change: '-0%', 
       trend: stats.upcomingMaintenance > 0 ? 'down' : 'neutral', 
-      subtitle: `${stats.upcomingMaintenance} à venir`, 
+      subtitle: stats.overdueMaintenance > 0 
+        ? `${stats.overdueMaintenance} dépassée${stats.overdueMaintenance > 1 ? 's' : ''}, ${stats.urgentMaintenance} urgente${stats.urgentMaintenance > 1 ? 's' : ''}`
+        : stats.urgentMaintenance > 0
+        ? `${stats.urgentMaintenance} urgente${stats.urgentMaintenance > 1 ? 's' : ''}, ${stats.upcomingMaintenance} à venir`
+        : `${stats.upcomingMaintenance} à venir`, 
       icon: Wrench, 
-      color: 'orange' 
+      color: stats.overdueMaintenance > 0 ? 'red' : stats.urgentMaintenance > 0 ? 'orange' : 'orange'
     },
     { 
       label: 'Remorques', 
@@ -84,6 +98,61 @@ const Overview = () => {
 
   return (
     <div className="space-y-6">
+      {/* Alertes de maintenance urgente */}
+      {(stats.urgentMaintenance > 0 || stats.overdueMaintenance > 0) && (
+        <div className={`rounded-2xl p-6 border-2 ${
+          stats.overdueMaintenance > 0 
+            ? 'bg-red-50 border-red-200' 
+            : 'bg-orange-50 border-orange-200'
+        }`}>
+          <div className="flex items-start space-x-4">
+            <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+              stats.overdueMaintenance > 0 
+                ? 'bg-red-100' 
+                : 'bg-orange-100'
+            }`}>
+              <AlertTriangle className={`w-6 h-6 ${
+                stats.overdueMaintenance > 0 
+                  ? 'text-red-600' 
+                  : 'text-orange-600'
+              }`} />
+            </div>
+            <div className="flex-1">
+              <h3 className={`text-lg font-bold mb-2 ${
+                stats.overdueMaintenance > 0 
+                  ? 'text-red-900' 
+                  : 'text-orange-900'
+              }`}>
+                {stats.overdueMaintenance > 0 
+                  ? `⚠️ ${stats.overdueMaintenance} maintenance${stats.overdueMaintenance > 1 ? 's' : ''} dépassée${stats.overdueMaintenance > 1 ? 's' : ''} !`
+                  : `⚠️ ${stats.urgentMaintenance} maintenance${stats.urgentMaintenance > 1 ? 's' : ''} urgente${stats.urgentMaintenance > 1 ? 's' : ''} à planifier`
+                }
+              </h3>
+              <p className={`text-sm mb-4 ${
+                stats.overdueMaintenance > 0 
+                  ? 'text-red-700' 
+                  : 'text-orange-700'
+              }`}>
+                {stats.overdueMaintenance > 0 
+                  ? 'Des maintenances sont en retard. Veuillez les planifier immédiatement.'
+                  : 'Des maintenances doivent être effectuées dans les 3 prochains jours.'
+                }
+              </p>
+              <button
+                onClick={() => navigate('/admin/maintenance')}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  stats.overdueMaintenance > 0
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-orange-600 text-white hover:bg-orange-700'
+                }`}
+              >
+                Voir les maintenances →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {statsData.map((stat, index) => {
           const Icon = stat.icon;
@@ -91,7 +160,8 @@ const Overview = () => {
             blue: 'from-blue-500 to-blue-600',
             green: 'from-green-500 to-green-600',
             orange: 'from-orange-500 to-orange-600',
-            purple: 'from-purple-500 to-purple-600'
+            purple: 'from-purple-500 to-purple-600',
+            red: 'from-red-500 to-red-600'
           };
           return (
             <div key={index} className="bg-white rounded-2xl p-6 border border-gray-200/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
