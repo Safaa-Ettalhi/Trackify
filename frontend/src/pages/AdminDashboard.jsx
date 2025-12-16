@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState} from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Routes, Route, Outlet, useLocation, Link } from 'react-router-dom';
 import { Truck, Package, Route as RouteIcon, Wrench, FileText, LayoutDashboard, LogOut, Menu, X, Circle } from 'lucide-react';
