@@ -254,8 +254,10 @@ docker-compose down -v
 - `lucide-react` : Icônes
 
 ## screnshot 
-<img width="1889" height="875" alt="image" src="https://github.com/user-attachments/assets/05010415-061c-4453-a1da-6da66745e483" />
-<img width="1889" height="875" alt="image" src="https://github.com/user-attachments/assets/c92e2938-06c4-4021-a680-27e8ef8f101c" />
+<img width="1889" height="875" src="https://github.com/user-attachments/assets/05010415-061c-4453-a1da-6da66745e483" /> <img width="1889" height="875" src="https://github.com/user-attachments/assets/c92e2938-06c4-4021-a680-27e8ef8f101c" /> <img width="1919" height="873" src="https://github.com/user-attachments/assets/1cecf533-2020-4191-add0-42b3f04571ba" /> <img width="1919" height="875" src="https://github.com/user-attachments/assets/748b99fc-7c91-42b3-834c-3e508f5e0055" /> <img width="1896" height="873" src="https://github.com/user-attachments/assets/28409304-2713-4856-ab42-deb9e4e6cd2a" /> 
+
+
+
 
 
 
