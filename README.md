@@ -253,5 +253,9 @@ docker-compose down -v
 - `tailwindcss` : Framework CSS
 - `lucide-react` : Icônes
 
+## screnshot 
+<img width="1889" height="875" alt="image" src="https://github.com/user-attachments/assets/05010415-061c-4453-a1da-6da66745e483" />
+<img width="1889" height="875" alt="image" src="https://github.com/user-attachments/assets/c92e2938-06c4-4021-a680-27e8ef8f101c" />
+
 
 
